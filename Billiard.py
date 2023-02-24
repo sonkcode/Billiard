@@ -25,8 +25,8 @@ for i in range(7):
         "y": random.randint(50, HEIGHT - 50),
         "r": 20,
         "color": WHITE,
-        "vx": 0.5,
-        "vy": 0.5
+        "vx": 0.7,
+        "vy": 0.7
     }
     balls.append(ball)
 pockets = [
@@ -71,6 +71,42 @@ while running:
             if distance < ball["r"]:
                 balls.remove(ball)
                 break
+        # проверка, закончилась ли игра
+        if len(balls) == 0:
+            # создаем кнопку
+            button_font = pygame.font.SysFont(None, 30)
+            button_rect = pygame.Rect(300, 250, 200, 50)
+            pygame.draw.rect(screen, BLACK, button_rect)
+            pygame.draw.rect(screen, WHITE, button_rect, 5)
+            button_text = button_font.render("Давай ещё раз!", True, WHITE)
+            text_rect = button_text.get_rect(center=button_rect.center)
+            screen.blit(button_text, text_rect)
+            # обновляем экран
+            pygame.display.flip()
+
+            # добавил внопку повтора
+            waiting = True
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        waiting = False
+                        running = False
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if button_rect.collidepoint(mouse_pos):
+                            # перезапускаем игру (говнокод конечно, но пока так)
+                            balls = []
+                            for i in range(7):
+                                ball = {
+                                    "x": random.randint(50, WIDTH - 50),
+                                    "y": random.randint(50, HEIGHT - 50),
+                                    "r": 20,
+                                    "color": WHITE,
+                                    "vx": 0.5,
+                                    "vy": 0.5
+                                }
+                                balls.append(ball)
+                            waiting = False
         # чистим экран
     screen.fill(GREEN)
 
