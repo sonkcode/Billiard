@@ -4,8 +4,8 @@ import random
 # инициализируем Pygame
 pygame.init()
 # устанавливаем размеры окна
-WIDTH = 600
-HEIGHT = 400
+WIDTH = 800
+HEIGHT = 600
 
 # работаем с цветами
 WHITE = (255, 255, 255)
@@ -25,7 +25,7 @@ for i in range(7):
         "y": random.randint(50, HEIGHT - 50),
         "r": 20,
         "color": WHITE,
-        "vx": -0.2,
+        "vx": 0.2,
         "vy": 0.2
     }
     balls.append(ball)
@@ -42,7 +42,7 @@ pockets = [
 ball_images = []
 for i in range(1, 8):
     img = pygame.image.load(f"ball{i}.png")
-    ball_images.append(pygame.transform.scale(img, (50, 50)))
+    ball_images.append(pygame.transform.scale(img, (80, 80)))
 
 # основной игровой цикл
 running = True
