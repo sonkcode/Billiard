@@ -25,8 +25,8 @@ for i in range(7):
         "y": random.randint(50, HEIGHT - 50),
         "r": 20,
         "color": WHITE,
-        "vx": 0.2,
-        "vy": 0.2
+        "vx": 0.5,
+        "vy": 0.5
     }
     balls.append(ball)
 pockets = [
@@ -44,8 +44,10 @@ for i in range(1, 8):
     img = pygame.image.load(f"ball{i}.png")
     ball_images.append(pygame.transform.scale(img, (80, 80)))
 
+
 # основной игровой цикл
 running = True
+
 while running:
 
     for event in pygame.event.get():
@@ -71,6 +73,18 @@ while running:
                 break
         # чистим экран
     screen.fill(GREEN)
+
+    # создаем объект шрифта
+    font = pygame.font.Font(None, 50)
+
+    # создаем текстовую поверхность
+    text_surface = font.render("Rock ’n’ Roll", True, BLACK)
+
+    # устанавливаем расположение текста в центре экрана
+    text_rect = text_surface.get_rect(center=(WIDTH / 2, HEIGHT / 2))
+
+    # отображаем текстовую поверхность на экране
+    screen.blit(text_surface, text_rect)
 
     for i, ball in enumerate(balls):
         ball_surface = ball_images[i]
