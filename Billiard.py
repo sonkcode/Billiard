@@ -1,133 +1,113 @@
+import sys
+
 import pygame
 import random
 
-# инициализируем Pygame
 pygame.init()
-# устанавливаем размеры окна
+
 WIDTH = 800
 HEIGHT = 600
 
-# работаем с цветами
 WHITE = (255, 255, 255)
 GREEN = (0, 85, 36)
 BROWN = (139, 69, 19)
 BLACK = (0, 0, 0)
 
-# создаём окно
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Billiard for Sergey Kudelya. Created by Art.Pro")
 
-# создание шаров vx, vy - регулирует скорость
-balls = []
-for i in range(7):
-    ball = {
-        "x": random.randint(50, WIDTH - 50),
-        "y": random.randint(50, HEIGHT - 50),
-        "r": 20,
-        "color": WHITE,
-        "vx": 0.7,
-        "vy": 0.7
-    }
-    balls.append(ball)
-pockets = [
-    {"x": 0, "y": 0},
-    {"x": WIDTH / 2, "y": 0},
-    {"x": WIDTH, "y": 0},
-    {"x": 0, "y": HEIGHT},
-    {"x": WIDTH / 2, "y": HEIGHT},
-    {"x": WIDTH, "y": HEIGHT},
-]
+class Ball:
+    def __init__(self, x, y, r, color, vx, vy, image):
+        self.x = x
+        self.y = y
+        self.r = r
+        self.color = color
+        self.vx = vx
+        self.vy = vy
+        self.image = image
 
-# создание изображений шаров
-ball_images = []
-for i in range(1, 8):
-    img = pygame.image.load(f"ball{i}.png")
-    ball_images.append(pygame.transform.scale(img, (80, 80)))
+    def draw(self, screen):
+        ball_rect = self.image.get_rect(center=(int(self.x), int(self.y)))
+        screen.blit(self.image, ball_rect)
 
+    def move(self):
+        self.x += self.vx
+        self.y += self.vy
 
-# основной игровой цикл
-running = True
+    def check_walls_collision(self):
+        if self.x - self.r < 0 or self.x + self.r > WIDTH:
+            self.vx = -self.vx
+        if self.y - self.r < 0 or self.y + self.r > HEIGHT:
+            self.vy = -self.vy
 
-while running:
+    def check_ball_collision(self, other_ball):
+        distance = ((self.x - other_ball.x) ** 2 + (self.y - other_ball.y) ** 2) ** 0.5
+        if distance < self.r + other_ball.r:
+            self.vx, other_ball.vx = other_ball.vx, self.vx
+            self.vy, other_ball.vy = other_ball.vy, self.vy
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    # движение шаров
-    for ball in balls:
-        # столкновение со стенами
-        if ball["x"] - ball["r"] < 0 or ball["x"] + ball["r"] > WIDTH:
-            ball["vx"] = -ball["vx"]
-        if ball["y"] - ball["r"] < 0 or ball["y"] + ball["r"] > HEIGHT:
-            ball["vy"] = -ball["vy"]
-        # движение
-        ball["x"] += ball["vx"]
-        ball["y"] += ball["vy"]
-
-        # проверка столкновения с лузами
+    def check_pockets_collision(self, pockets):
         for pocket in pockets:
-            distance = ((ball["x"] - pocket["x"]) ** 2 + (ball["y"] - pocket["y"]) ** 2) ** 0.5
-            if distance < ball["r"]:
-                balls.remove(ball)
-                break
-        # проверка, закончилась ли игра
-        if len(balls) == 0:
-            # создаем кнопку
-            button_font = pygame.font.SysFont(None, 30)
-            button_rect = pygame.Rect(300, 250, 200, 50)
-            pygame.draw.rect(screen, BLACK, button_rect)
-            pygame.draw.rect(screen, WHITE, button_rect, 5)
-            button_text = button_font.render("Давай ещё раз!", True, WHITE)
-            text_rect = button_text.get_rect(center=button_rect.center)
-            screen.blit(button_text, text_rect)
-            # обновляем экран
+            distance = ((self.x - pocket.x) ** 2 + (self.y - pocket.y) ** 2) ** 0.5
+            if distance < self.r:
+                return True
+        return False
+
+class Pocket:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, BROWN, (int(self.x), int(self.y)), 30)
+
+class Table:
+    def __init__(self):
+        self.balls = []
+        self.pockets = []
+        self.ball_images = []
+        for i in range(7):
+            x = random.randint(50, WIDTH - 50)
+            y = random.randint(50, HEIGHT - 50)
+            ball_image = pygame.image.load(f"ball{i+1}.png")
+            ball_image = pygame.transform.scale(ball_image, (80, 80))
+            ball = Ball(x, y, 10, WHITE, 4.7, 4.7, ball_image)
+            self.balls.append(ball)
+            self.ball_images.append(ball_image)
+
+        for pocket_x, pocket_y in [(0, 0), (WIDTH / 2, 0), (WIDTH, 0), (0, HEIGHT), (WIDTH / 2, HEIGHT), (WIDTH, HEIGHT)]:
+            pocket = Pocket(pocket_x, pocket_y)
+            self.pockets.append(pocket)
+
+    def run(self, screen):
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            screen.fill(GREEN)
+
+            for ball in self.balls:
+                ball.move()
+                ball.check_walls_collision()
+
+                for other_ball in self.balls:
+                    if ball != other_ball:
+                        ball.check_ball_collision(other_ball)
+
+                if ball.check_pockets_collision(self.pockets):
+                    self.balls.remove(ball)
+
+                ball.draw(screen)
+
+            for pocket in self.pockets:
+                pocket.draw(screen)
+
             pygame.display.flip()
+            clock.tick(60)
 
-            # добавил внопку повтора
-            waiting = True
-            while waiting:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        waiting = False
-                        running = False
-                    elif event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_pos = pygame.mouse.get_pos()
-                        if button_rect.collidepoint(mouse_pos):
-                            # перезапускаем игру (говнокод конечно, но пока так)
-                            balls = []
-                            for i in range(7):
-                                ball = {
-                                    "x": random.randint(50, WIDTH - 50),
-                                    "y": random.randint(50, HEIGHT - 50),
-                                    "r": 20,
-                                    "color": WHITE,
-                                    "vx": 0.5,
-                                    "vy": 0.5
-                                }
-                                balls.append(ball)
-                            waiting = False
-        # чистим экран
-    screen.fill(GREEN)
-
-    # создаем объект шрифта
-    font = pygame.font.Font(None, 50)
-
-    # создаем текстовую поверхность
-    text_surface = font.render("Rock ’n’ Roll", True, BLACK)
-
-    # устанавливаем расположение текста в центре экрана
-    text_rect = text_surface.get_rect(center=(WIDTH / 2, HEIGHT / 2))
-
-    # отображаем текстовую поверхность на экране
-    screen.blit(text_surface, text_rect)
-
-    for i, ball in enumerate(balls):
-        ball_surface = ball_images[i]
-        ball_rect = ball_surface.get_rect(center=(int(ball["x"]), int(ball["y"])))
-        screen.blit(ball_surface, ball_rect)
-    for pocket in pockets:
-        pygame.draw.circle(screen, BROWN, (int(pocket["x"]), int(pocket["y"])), 30)
-    pygame.display.flip()
-
-pygame.quit()
+if __name__ == '__main__':
+    table = Table()
+    table.run(screen)
